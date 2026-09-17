@@ -1,0 +1,7 @@
+/vendor/
+/.env
+/.phpunit.result.cache
+/composer.lock
+/.idea/
+/.junie/
+/.claude/

@@ -1,0 +1,42 @@
+{
+    "name": "dans6225/contact-warden-laravel",
+    "description": "Laravel admin-UI connector for dans6225/contact-warden.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "dans6225/contact-warden": "dev-main",
+        "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/view": "^10.0|^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "phpunit/phpunit": "^10.0|^11.0|^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ContactWardenLaravel\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ContactWardenLaravel\\Tests\\": "tests/unit/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ContactWardenLaravel\\ContactWardenServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/dans6225/contact-warden.git"
+        }
+    ]
+}
