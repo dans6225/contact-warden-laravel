@@ -9,6 +9,7 @@ use ContactWarden\Admin\ActionResult;
 use ContactWarden\Admin\AdminConnectorInterface;
 use ContactWarden\Admin\AdminDataSource;
 use ContactWarden\Admin\AdminMaintenance;
+use ContactWarden\Admin\MaintenanceActions;
 use ContactWarden\Admin\ReputationQuery;
 use ContactWarden\Admin\SubmissionQuery;
 
@@ -18,16 +19,19 @@ use ContactWarden\Admin\SubmissionQuery;
  * namespace by ContactWardenServiceProvider), so it works without the host
  * app publishing/copying any templates in.
  *
- * Action names and behavior match the CI4 connector's Ci4AdminConnector —
- * both implement the same interface against the same core, so an app
- * switching frameworks doesn't also have to relearn the action vocabulary.
+ * handleAction() delegates to core's MaintenanceActions, the same one every
+ * connector uses, so an app switching frameworks doesn't have to relearn the
+ * action vocabulary.
  */
 final class LaravelAdminConnector implements AdminConnectorInterface
 {
+    private readonly MaintenanceActions $actions;
+
     public function __construct(
         private readonly AdminDataSource $data,
-        private readonly AdminMaintenance $maintenance,
+        AdminMaintenance $maintenance,
     ) {
+        $this->actions = new MaintenanceActions($maintenance);
     }
 
     public function renderDashboard(): string
@@ -80,55 +84,7 @@ final class LaravelAdminConnector implements AdminConnectorInterface
 
     public function handleAction(string $action, array $input): ActionResult
     {
-        return match ($action) {
-            'purge_tokens' => new ActionResult(
-                true,
-                $this->maintenance->purgeExpiredTokens(new \DateTimeImmutable()) . ' expired or used tokens removed.',
-            ),
-            'purge_submissions' => $this->purgeOlderThan(
-                fn (\DateTimeImmutable $cutoff) => $this->maintenance->purgeSubmissionsOlderThan($cutoff),
-                $input,
-                'submission log entries',
-            ),
-            'purge_abuse' => $this->purgeOlderThan(
-                fn (\DateTimeImmutable $cutoff) => $this->maintenance->purgeAbuseEventsOlderThan($cutoff),
-                $input,
-                'abuse log entries',
-            ),
-            'forget_reputation' => $this->forgetReputation($input),
-            'reset_reputation' => $this->resetReputation(),
-            default => new ActionResult(false, "Unknown action \"{$action}\"."),
-        };
-    }
-
-    /** @param array<string,mixed> $input */
-    private function purgeOlderThan(callable $purge, array $input, string $label): ActionResult
-    {
-        $days = max(0, (int) ($input['days'] ?? 0));
-        $cutoff = (new \DateTimeImmutable())->modify("-{$days} days");
-        $removed = $purge($cutoff);
-
-        return new ActionResult(true, "{$removed} {$label} older than {$days} days removed.");
-    }
-
-    /** @param array<string,mixed> $input */
-    private function forgetReputation(array $input): ActionResult
-    {
-        $subject = trim((string) ($input['subject'] ?? ''));
-        if ($subject === '') {
-            return new ActionResult(false, 'No reputation subject given.');
-        }
-
-        $this->maintenance->forgetReputation($subject);
-
-        return new ActionResult(true, "Reputation for {$subject} cleared.");
-    }
-
-    private function resetReputation(): ActionResult
-    {
-        $this->maintenance->resetAllReputation();
-
-        return new ActionResult(true, 'All reputation scores cleared.');
+        return $this->actions->handle($action, $input);
     }
 
     /** @param array<string,mixed> $viewData */

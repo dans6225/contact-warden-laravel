@@ -80,8 +80,9 @@ full page, just the content fragment, so wrap it in your own layout view as show
 | `forget_reputation` | `subject` (string) | Clears one subject's reputation score |
 | `reset_reputation` | — | Clears every subject's reputation score |
 
-Any other action name returns a failed `ActionResult` — extend `LaravelAdminConnector` (or write
-your own `AdminConnectorInterface` implementation) if your app needs more.
+Any other action name returns a failed `ActionResult`. The dispatch itself lives in core's
+`MaintenanceActions`, which `LaravelAdminConnector::handleAction()` delegates to. To add actions of
+your own, handle them in your controller and pass everything else through to `handleAction()`.
 
 ## What this doesn't cover
 
